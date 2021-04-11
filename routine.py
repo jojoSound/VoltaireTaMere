@@ -1,5 +1,5 @@
-from Question import Question, found_matche, found_good_one, split_Word
-from File import print_debug
+from Question import Question, found_matche, found_good_one
+from file_function import print_debug
 from selenium.webdriver.common.by import By
 from random import randint
 
@@ -10,56 +10,63 @@ def test_Feature(Feature, driver): #test la presence d'une feature
     except:
         return False
 
-def BOT(driver, data, test_blanc, accr):
+def found_verbe(data, phrase):
+    i = 0
+    for i in range(0, len(data)):
+        if data[i] in phrase and data[i] != '':
+            print_debug("[found_verbe] verbe found:"+data[i], "green")
+            return data[i]
+    print_debug("[found_verbe] None", "red")
+    return None
+
+def BOT(driver, module, accr):
     print_debug("[BOT] ####### WORKING #######","white")
 
-    if not(test_blanc):
-        audio = test_Feature("sentenceAudioReader", driver)
+    if not(module.test_blanc):
+        if test_Feature("sentenceAudioReader", driver):
+            driver.find_element_by_id("btn_speaker").click()
+            driver.find_element_by_id("btn_non").click()
+
         if test_Feature("popupContent", driver):
             try:
                 driver.find_element_by_id("btn_fermer").click()
             except:
                 print_debug("[BOT] FAILED TO EXECUTE FEATURE IN","red")
                 return "feature_in"
+
+    if module.verbe_pron_I:
+        pron_rep = test_Feature("instructions", driver)
     else:
-        audio = False
-        
+        pron_rep = False
+
     try:
         Phrase = driver.find_element_by_class_name("sentence").text
+        print_debug("[BOT] PHRASE: "+str(Phrase),"white")
     except:
         return "no_sentence"
-        
-    print_debug("[BOT] PHRASE: "+str(Phrase),"white")
-    question = found_matche(Phrase, data)
+            
+    if not(pron_rep):
 
-    if randint(1,100) > accr and not(audio):
+        question = found_matche(Phrase, module.data)
+
+        if randint(1,100) > accr:
+            if question.matche != "":
+                if not(module.test_blanc):
+                    driver.find_element_by_id("btn_pas_de_faute").click()
+            else:
+                driver.find_elements_by_xpath("//span[@class = 'pointAndClickSpan'][.='"+ question.phrase.split()[0] +"']")[0].click()
+            return ["auto_fail"]
+        
         if question.matche != "":
-            if not(test_blanc):
-                driver.find_element_by_id("btn_pas_de_faute").click()
-        else:
-            driver.find_elements_by_xpath("//span[@class = 'pointAndClickSpan'][.='"+ split_Word(question.phrase)[0] +"']")[0].click()
-        return ["auto_fail"]
-        
-
-    if question.matche != "":
-        if audio:
-            driver.find_element_by_xpath("//input[@class='gwt-TextBox writingExerciseSpan']").send_keys(question.corr_in_matche.replace("@",""))
-            driver.find_element_by_id("btn_pas_de_faute").click()
-            print_debug("[BOT] EXECUTION AUDIO DONE","green")
-        else:
             try:
                 driver.find_elements_by_xpath("//span[@class = 'pointAndClickSpan'][.='"+ question.err_in_phrase +"']")[ found_good_one(question.phrase, question.matche, question.err_in_phrase) ].click()
                 print_debug("[BOT] EXECUTION CLICK DONE","green")
             except:
                 if "…" in question.err_in_phrase:
-                    driver.find_elements_by_xpath("//span[@class = 'pointAndClickSpan'][.='"+ question.err_in_phrase.replace("…","") +"']")[ found_good_one(question.phrase, question.matche, question.err_in_phrase.replace("…","")) ].click()
+                        driver.find_elements_by_xpath("//span[@class = 'pointAndClickSpan'][.='"+ question.err_in_phrase.replace("…","") +"']")[ found_good_one(question.phrase, question.matche, question.err_in_phrase.replace("…","")) ].click()
                 else:
                     print_debug("[BOT] FAILED TO EXECUTE CAN'T TOUCH: "+str(question.err_in_phrase),"red")
-                    return "can't_touche &"+str(question.err_in_phrase)
-    else:
-        if audio:
-            print_debug("[BOT] FAILED TO EXECUTE NO MATCH FOUND\n","yellow")
-            return "not_found"
+                    return "can't_touche "+str(question.err_in_phrase)
         else:
             try:
                 driver.find_element_by_class_name("noMistakeButton").click()
@@ -67,39 +74,112 @@ def BOT(driver, data, test_blanc, accr):
             except:
                 return []
         
-    print(question.err_list)
-    return question.err_list
-
-def MANUAL(driver, data, test_blanc):
-    if not(test_blanc):
-        audio = test_Feature("sentenceAudioReader", driver)
+        return question.err_list
+    else:
         if test_Feature("popupContent", driver):
             try:
                 driver.find_element_by_id("btn_fermer").click()
             except:
                 print_debug("[BOT] FAILED TO EXECUTE FEATURE IN","red")
                 return "feature_in"
-    else:
-        audio = False
+        consigne = driver.find_element_by_class_name("instructions").text
+        phrase_clear = driver.find_element_by_class_name("sentence").text.replace("‑","-").replace(",","").replace(".","")
+        phrase = phrase_clear.replace("‑","-").replace("-","- ").replace(",","").replace(".","").replace("'","' ").split()
+        if "essentiellement" in consigne:
+            verbe = found_verbe(module.ess, phrase)
+        elif "autonome" in consigne:
+            verbe = found_verbe(module.atnm, phrase)
+        elif "passif" in consigne:
+            verbe = found_verbe(module.pas, phrase)
+        elif "accidentellement" in consigne:
+            verbe = found_verbe(module.acc, phrase)
+        else:
+            question = found_matche(phrase_clear, module.match)
+            verbe = question.corr_in_matche.replace("@","")
+
+        if verbe != None and verbe != "":
+            if "réfléchi" in consigne and "accidentellement" not in consigne:
+                driver.find_elements_by_xpath("//span[@class = 'pointAndClickSpan'][.='"+ verbe.replace("-","").replace("'","") +"']")[found_good_one(question.phrase, question.matche, question.err_in_phrase)].click()
+                print_debug("CLICK DONE", "green")
+
+                if driver.find_elements_by_xpath("//span[@title='Mauvaise réponse']") != []:
+                    print_debug("FAILED, learning...\n", "magenta")
+                    add_data = driver.find_element_by_class_name("answerWord").text.replace("‑","-").replace("-","- ").replace(",","").replace(".","").replace("'","' ").split()
+                    add_data = add_data[len(add_data)-1].replace(" ","")
+                    match1 = question.matche_No_Change
+                    match2 = match1[:match1.index(add_data, match1.index(">"))] + "<@" + add_data + ">" + match1[match1.index(add_data, match1.index(">"))+len(add_data):]
+                    match2 = match2[ :match2.index("<") ] + add_data + match2[ match2.index(">")+1:]
+                    module.match[module.match.index(match1)] = match2
+            else:
+                driver.find_elements_by_xpath("//span[@class = 'pointAndClickSpan'][.='"+ verbe +"']")[0].click()
+                print_debug("CLICK DONE", "green")
+
+        else:
+            print_debug("FAILED, learning...", "magenta")
+            print(phrase)
+            driver.find_elements_by_xpath("//span[@class = 'pointAndClickSpan'][.='"+ phrase[0].replace("-","").replace("'","") +"']")[0].click()
+            add_data = driver.find_element_by_class_name("answerWord").text.replace("‑","-").replace("-","- ").replace(",","").replace(".","").replace("'","' ").split()
+            add_data = add_data[len(add_data)-1].replace(" ","")
+            if "essentiellement" in consigne:
+                module.ess += [add_data]
+            elif "autonome" in consigne:
+                module.atnm += [add_data]
+            elif "passif" in consigne:
+                module.pas += [add_data]
+            elif "accidentellement" in consigne:
+                module.acc += [add_data]
+            else:
+                module.match += [phrase_clear[:phrase_clear.index(add_data)] + "<@" + add_data + ">" + phrase_clear[phrase_clear.index(add_data)+len(add_data):]]
+            
+        return ["verbe_pron_I"]
+
+def MANUAL(driver, module):
+    if not(module.test_blanc):
+        if test_Feature("sentenceAudioReader", driver):
+            driver.find_element_by_id("btn_speaker").click()
+            driver.find_element_by_id("btn_non").click()
+
+        if test_Feature("popupContent", driver):
+            try:
+                driver.find_element_by_id("btn_fermer").click()
+            except:
+                print_debug("[BOT] FAILED TO EXECUTE FEATURE IN","red")
+                return "feature_in"
     
     try:
         Phrase = driver.find_element_by_class_name("sentence").text
+        print_debug("[BOT] PHRASE: "+str(Phrase),"white")
     except:
         return "no_sentence"
     
-    print_debug("[BOT] PHRASE: "+str(Phrase),"white")
-    question = found_matche(Phrase, data)
-
-    if question.matche != "":
-        if audio:
-            return question.corr_in_matche
-        else:
-            return question.err_in_phrase
+    if module.verbe_pron_I:
+        pron_rep = test_Feature("instructions", driver)
     else:
-        if audio:
-            return "not_found"
+        pron_rep = False
+
+    if not(pron_rep):
+        question = found_matche(Phrase, module.data)
+
+        if question.matche != "":
+            return question.err_in_phrase
         else:
             return "no_error"
-    
-    print(question.err_list)
-    return question.err_list
+    else:
+        consigne = driver.find_element_by_class_name("instructions").text
+
+        phrase_clear = driver.find_element_by_class_name("sentence").text.replace("‑","-").replace(",","").replace(".","")
+        phrase = phrase_clear.replace("‑","-").replace("-","- ").replace(",","").replace(".","").replace("'","' ").split()
+        if "essentiellement" in consigne:
+            verbe = found_verbe(module.ess, phrase)
+        elif "autonome" in consigne:
+            verbe = found_verbe(module.atnm, phrase)
+        elif "passif" in consigne:
+            verbe = found_verbe(module.pas, phrase)
+        elif "accidentellement" in consigne:
+            verbe = found_verbe(module.acc, phrase)
+        else:
+            question = found_matche(phrase_clear, module.match)
+            verbe = question.corr_in_matche.replace("@","")
+        
+        return verbe
+

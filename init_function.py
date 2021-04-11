@@ -1,95 +1,93 @@
-from tkinter import Tk, Label, PhotoImage, Button
+import json
+from tkinter import Tk, Toplevel, Label, PhotoImage, Button
 import webbrowser
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as chrome_options
 from selenium.webdriver.firefox.options import Options as firefox_options
 from selenium.webdriver.opera.options import Options as opera_options
-from selenium.webdriver.edge.options import Options as edge_options
-from File import print_debug, found_data
-#/msg(-size:str -txt:str -title:str -link:str -lock:bool -version:str -show:bool)
+from file_function import print_debug, found_data
 
 class pop_up:
-    class cls_option:
-            def __init__(self, option):
-                self.size = option[option.index("size:")+5: option.index("-", option.index("size:"))-1]
-                self.txt = option[option.index("txt:")+4: option.index("-", option.index("txt:"))-1]
-                self.title = option[option.index("title:")+6: option.index("-", option.index("title:"))-1]
-                self.link = option[option.index("link:")+5: option.index("-", option.index("link:"))-1]
-                self.lock = int( option[option.index("lock:")+5: option.index("-", option.index("lock:"))-1])
-            
-            def print_self(self):
-                print("size:",self.size)
-                print("txt:",self.txt)
-                print("title:",self.title)
-                print("link:",self.link)
-                print("lock:",self.lock)
-
-    def __init__(self, string):
-        self.command = string[string.index("/")+1 : string.index("{")]
-        self.option = self.cls_option(string[string.index("{")+1 : string.index("}")]+" -")
-    
-    def start_root(self):
-        self.root = Tk()
-        self.root.title(self.option.title)
+    def __init__(self, cmd, parent=None):
+        self.cmd = cmd
+        self.size = cmd.get("size")
+        self.txt = cmd.get("text")
+        if self.txt:
+            self.txt = self.txt.replace("\\n","\n")
+        self.title = cmd.get("title")
+        self.link = cmd.get("link")
+        self.lock = cmd.get("lock")
+        if parent:
+            self.root = Toplevel(parent)
+        else:
+            self.root = Tk()
+            self.root.iconphoto(True, PhotoImage(file = "asset\\VoltaireTaMere_icon[PNG].png"))
+        self.root.title(self.title)
         self.root.resizable(False, False)
-        self.root.geometry(self.option.size)
-        self.root.iconphoto(True, PhotoImage(file = "asset\\VoltaireTaMere_icon[PNG].png"))
+        self.root.geometry(self.size)
         self.root.configure(bg='#23272A')
 
-        Label(self.root, text=self.option.txt, bg='#23272A', fg='#ffffff', font=('Helvetica', '10',"bold")).pack()
+        Label(self.root, text=self.txt, bg='#23272A', fg='#ffffff', font=('Helvetica', '10',"bold")).pack()
 
         Button(self.root,
                         text="  OK  ",
-                        command=lambda: [self.open_link(), self.root.destroy()],  
+                        command=lambda: [self.open_link(), self.root.destroy(), self.stop()],  
                         bg="#a2d417",
                         fg="#ffffff",
                         activebackground  ="#a2d417",
                         bd=0).pack()
     
     def open_link(self):
-        if self.option.link != "None":
-            webbrowser.open_new(self.option.link)
+        if self.link != None:
+            webbrowser.open_new(self.link)
 
-    def print_self(self):
-        print("command:", self.command)
-        self.option.print_self()
+    def stop(self):
+        if self.lock:
+            exit()
 
-def init():
-    open(".\\file\\DEBUG.txt","w",encoding="utf-8").close()
+def connect(driver):
+    logIn= found_data(".\\file\\log.txt", "login")
+    mdp = found_data(".\\file\\log.txt", "mdp")
     try:
-        option = chrome_options()
-        option.add_argument ("--headless")
-        v_driver = webdriver.Chrome(options=option)
+        driver.find_element_by_id("btn_home_sortir").click()
     except:
-        print_debug("[v_driver] don't detect Chrome","yellow")
+        pass
+    driver.get("https://www.projet-voltaire.fr/voltaire/com.woonoz.gwt.woonoz.Voltaire/Voltaire.html?returnUrl=www.projet-voltaire.fr/choix-parcours/&applicationCode=pv")
+    if found_data("./file/options.txt", "auto_login"):
+        driver.find_element_by_id("user_pseudonym").send_keys(logIn)
+        driver.find_element_by_id("user_password").send_keys(mdp)
+        driver.find_element_by_id("login-btn").click()
+        
+def get_driver():
+    try:
+        driver = webdriver.Chrome()
+    except:
+        print_debug("[DRIVER] don't detect Chrome","yellow")
         try:
-            option = firefox_options()
-            option.add_argument ("--headless")
-            v_driver = webdriver.Opera(options=option)
+            driver = webdriver.Opera()
         except:
-            print_debug("[v_driver] don't detect Opera","yellow")
+            print_debug("[DRIVER] don't detect Opera","yellow")
             try:
-                option = opera_options()
-                option.add_argument ("--headless")
-                v_driver = webdriver.Firefox(options=option)
+                driver = webdriver.Firefox() 
             except:
-                print_debug("[v_driver] CANT FIND COMPATIBLE DRIVER -> EXIT","red")
-                e = pop_up("/msg{-txt:aucun moteur\n de recherche detecté \n(chrome, opera ou firefox) -title:VoltaireTaMere -link:https://www.google.com/intl/fr_fr/chrome/ -lock:0 -size:180x90}")
-                e.start_root()
-                e.root.mainloop()
+                print_debug("[DRIVER] Failed to detect driver","red")
+                pop_up(json.loads('{"text":"aucun moteur\\n de recherche detecté \\n(chrome, opera ou firefox)", "title":"VoltaireTaMere", "link":"https://www.google.com/intl/fr_fr/chrome/", "lock":true, "size":"180x90"}')).root.mainloop()
                 exit()
 
-    v_driver.get("https://sites.google.com/view/voltairetamere/init")
-    v_driver.implicitly_wait(1)
-    init_command = v_driver.find_element_by_class_name("yaqOZd").text
-    print("init_command:", init_command)
-    v_driver.close()
-    if init_command[init_command.index("version:")+8:] != found_data("./file/version.txt","version","str"):
-        init_command = "/msg{-txt:VoltaireTaMere doit être\n mis à jour -title:VoltaireTaMere -link:https://sites.google.com/view/voltairetamere/accueil -lock:1 -size:180x70}"
+    driver.implicitly_wait(1)
+    return driver
 
-    if init_command != "version:"+found_data("./file/version.txt","version","str"):
-        w = pop_up(init_command)
-        w.start_root()
-        w.root.mainloop()
-        if w.option.lock:
+def init_verif(driver, parent=None):
+    driver.get("https://sites.google.com/view/voltairetamere/init")
+    cmd = json.loads(driver.find_element_by_class_name("yaqOZd").text)
+    driver.get("https://sites.google.com/view/voltairetamere/load")
+    print(cmd.get("version"), found_data("./file/version.txt", "version"))
+    if cmd.get("version") != found_data("./file/version.txt", "version"):
+        pp_cmd = {"text":"VoltaireTaMere doit être\\n mis à jour", "title":"VoltaireTaMere", "link":"https://sites.google.com/view/voltairetamere/accueil", "lock":True, "size":"180x70"}
+        pop_up(pp_cmd, parent).root.mainloop()
+        exit()
+    
+    if cmd.get("title"):
+        pop_up(cmd).root.mainloop()
+        if cmd.get("lock"):
             exit()

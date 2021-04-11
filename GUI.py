@@ -1,7 +1,9 @@
-import os
+import os, json
 from tkinter import Button, Label, Tk, Entry, Listbox, Text, Menubutton, Menu, PhotoImage, StringVar, IntVar, Toplevel
 from time import sleep
-from File import Module, print_debug, found_data, connect, write_data
+from module import Module
+from file_function import print_debug, found_data, write_data
+from init_function import connect
 from routine import BOT, MANUAL
 from threading import Thread
 from Question import auto_learning
@@ -31,8 +33,8 @@ class GUI:
 
         self.accuracy = IntVar()
         self.time_next = IntVar()
-        self.accuracy.set(found_data("./file/options.txt", "accuracy", "int"))
-        self.time_next.set(found_data("./file/options.txt", "accuracy", "int"))
+        self.accuracy.set(found_data("./file/options.txt", "accuracy"))
+        self.time_next.set(found_data("./file/options.txt", "time"))
         
         self.number_q = 0
         self.prgm = StringVar()
@@ -41,7 +43,7 @@ class GUI:
         self.fond = Label(self.root, image=None, bg= '#23272A')
         self.btn_pont_sup = Button(self.root, text = "PONT\nSUPÉRIEUR",
                             command=lambda : [self.prgm.set("pont_Supérieur"),
-                                                self.niveau.set("Module\\ 1 Module\\ 2 Module\\ 3 Module\\ 4 Module\\ 5 Module\\ 6 Module\\ 7 Module\\ 8 Test\\ Blanc"),
+                                                self.niveau.set("Niveau\\ 1 Niveau\\ 2 Niveau\\ 3 Niveau\\ 4 Niveau\\ 5 Niveau\\ 6 Niveau\\ 7 Niveau\\ 8 Test\\ Blanc"),
                                                 self.Menu_Unpack(),self.Menu_2(self.BG2)],
                             bg="#a2d417",
                             highlightthickness=2,
@@ -51,7 +53,7 @@ class GUI:
                             font=('Helvetica', '10',"bold"))
         self.btn_sup = Button(self.root, text = "SUPÉRIEUR",
                             command=lambda : [self.prgm.set("Supérieur"), 
-                                                self.niveau.set("Module\\ 1 Module\\ 2 Module\\ 3 Module\\ 4 Module\\ 5 Module\\ 6 Module\\ 7 Module\\ 8 Module\\ 9 Module\\ 10 Test\\ Blanc"), 
+                                                self.niveau.set("Niveau\\ 1 Niveau\\ 2 Niveau\\ 3 Niveau\\ 4 Niveau\\ 5 Niveau\\ 6 Niveau\\ 7 Niveau\\ 8 Niveau\\ 9 Niveau\\ 10 Test\\ Blanc"), 
                                                 self.Menu_Unpack(), self.Menu_2(self.BG2)],
                             bg="#a2d417",
                             highlightthickness=2,
@@ -61,7 +63,7 @@ class GUI:
                             font=('Helvetica', '10',"bold"))
         self.btn_exc = Button(self.root, text = "EXCELLENCE",
                             command=lambda : [self.prgm.set("Excellence"),
-                                                self.niveau.set("Module\\ 1 Module\\ 2 Module\\ 3 Module\\ 4 Module\\ 5 Module\\ 6 Module\\ 7 Module\\ 8 Module\\ 9 Module\\ 10 Module\\ 11 Module\\ 12 Verbes\\ Pronominaux\\ II"), 
+                                                self.niveau.set("Atrée Agamemnon Clytemnestre Égisthe Ménélas Hélène Alétès Hermione Oreste Chrysotémis Électre Iphigénie Verbes\\ pronominaux\\ I Verbes\\ Pronominaux\\ II"), 
                                                 self.Menu_Unpack(), self.Menu_2(self.BG2)],
                             bg="#a2d417",
                             highlightthickness=2,
@@ -197,9 +199,9 @@ class GUI:
                             font=('Helvetica', '10'))
 
         self.time_buffer = StringVar()
-        self.time_buffer.set(found_data("./file/options.txt","time","int"))
+        self.time_buffer.set(found_data("./file/options.txt","time"))
         self.accurate_buffer = StringVar()
-        self.accurate_buffer.set(found_data("./file/options.txt","accuracy","int"))
+        self.accurate_buffer.set(found_data("./file/options.txt","accuracy"))
 
         self.input_data = Entry (self.root,
                             textvariable = None,
@@ -210,7 +212,7 @@ class GUI:
                             font=('Helvetica', '10')) 
     
     def auto_login_switch(self):
-        if found_data("./file/options.txt","auto_login", "int"):
+        if found_data("./file/options.txt","auto_login"):
             self.switch_auto_login["bg"] = "#a2d417"
             self.switch_auto_login["text"] = "activer"
             self.switch_auto_login["command"] = lambda: [write_data("./file/options.txt","auto_login",0), self.auto_login_switch()]
@@ -262,8 +264,8 @@ class GUI:
         self.btn_back["command"] = lambda: [ self.Menu_Unpack(),self.Menu_1(self.BG1), 
                                             write_data("./file/options.txt","time", self.time_buffer.get()),
                                             write_data("./file/options.txt","accuracy", self.accurate_buffer.get()),
-                                            self.accuracy.set(found_data("./file/options.txt", "accuracy", "int")),
-                                            self.time_next.set(found_data("./file/options.txt", "accuracy", "int"))]
+                                            self.accuracy.set(found_data("./file/options.txt", "accuracy")),
+                                            self.time_next.set(found_data("./file/options.txt", "time"))]
         self.auto_login_switch()
         self.log["width"] = 58
         self.log["bg"] = "#23272A"
@@ -338,10 +340,12 @@ class GUI:
             self.time_next.set(1)
             write_data("./file/options.txt","time",1)
             print_debug("[option] time valeur interdite", "red")
+        print(self.accuracy.get(), self.time_next.get())
+
 
         while self.bot_on:
             self.log.delete(1.0,"end")
-            return_tag = BOT(self.driver, self.module.data, self.module.test_blanc, self.accuracy.get())
+            return_tag = BOT(self.driver, self.module, self.accuracy.get())
             print_debug("return_tag: "+str(return_tag)+"\n","yellow")
             if type(return_tag) != list:
                 if return_tag == "feature_in":
@@ -354,14 +358,14 @@ class GUI:
             
             self.number_q += 1
             if self.module.test_blanc == False:
-                if self.driver.find_elements_by_xpath("//span[@title='Mauvaise réponse']") != [] and return_tag != ["auto_fail"]:
+                if self.driver.find_elements_by_xpath("//span[@title='Mauvaise réponse']") != [] and return_tag != ["auto_fail"] and return_tag != ["verbe_pron_I"]:
                     text = self.driver.find_elements_by_xpath("//span[@class = 'answerWord']/span[@class = 'pointAndClickSpan']")[1].text
                     if return_tag == []:
-                        auto_learning().add_match( self.driver.find_element_by_class_name("sentence").text, text)
+                        auto_learning().add_match(self.driver.find_element_by_class_name("sentence").text, text)
                     else:
-                        auto_learning().add_data( return_tag, text)
+                        auto_learning().add_data(return_tag, text)
                     self.log.insert("end","erreur détéctée apprentissage...\n","green")
-
+                
                 self.driver.find_element_by_class_name("nextButton").click()
 
             self.log.insert("end","["+str(self.number_q)+"]: Clique fait !\n","green")
@@ -374,7 +378,7 @@ class GUI:
 
         self.bot_on = False
         self.btn_auto["image"]=self.Auto_off
-        self.time_next.set(found_data("./file/options.txt", "time", "int"))
+        self.time_next.set(found_data("./file/options.txt", "time"))
         print_debug("[BOT_ROUTINE] I am a bot, and this action was performed automatically.\nI answered "+str(self.number_q)+" questions","green")
         self.log.insert("end","I am a bot, and this action was performed automatically.\nI answered "+str(self.number_q)+" questions\n","green")
         self.number_q = 0
@@ -382,7 +386,7 @@ class GUI:
 
     def ROUTINE_MANUAL(self):
         self.log.delete(1.0,"end")
-        return_tag = MANUAL(self.driver, self.module.data, self.module.test_blanc)
+        return_tag = MANUAL(self.driver, self.module)
         if return_tag == "feature_in":
             self.log.insert("end","Merci de fermer la Pop-up\n","yellow")
         elif return_tag == "not_found":
@@ -393,16 +397,17 @@ class GUI:
             self.log.insert("end","la faute est: "+ return_tag + "\n","green")
         
         self.log.insert("end",open(".\\file\\VTMtext.txt","r",encoding="utf-8").read())
-        
+
 class Login:
     def __init__(self, driver, parent=None):
         os.startfile(".\\file\\NOTICE.pdf")
-        if parent == None:
-            self.root = Tk()
-        else:
+        if parent:
             self.root = Toplevel(parent)
+        else:
+            self.root = Tk()
             self.root.iconphoto(True, PhotoImage(file = "asset\\VoltaireTaMere_icon[PNG].png"))
-        self.driver =  driver
+
+        self.driver = driver
         self.root.title("VoltaireTaMere")
         self.root.resizable(False, False)
         self.root.geometry('240x180')
@@ -463,13 +468,12 @@ class Login:
         self.g.place(x=145, y=145)
     
     def register(self):
-        self.flog.write("login:"+self.User.get()+"\nmdp:"+self.Mdp.get()+"\n")
+        self.flog.write(json.dumps({"login":self.User.get(),"mdp":self.Mdp.get()}))
         self.flog.close()
         self.root.destroy()
         connect(self.driver)
     
     def unactive(self):
-        self.flog.write("login:*\nmdp:*\n")
+        self.flog.write(json.dumps({"login":None,"mdp":None}))
         self.flog.close()
         self.root.destroy()
-    

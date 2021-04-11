@@ -1,21 +1,14 @@
-from GUI import GUI, Login
-from File import print_debug, found_data, connect
-from init import init, pop_up
 from selenium import webdriver
-init()
+from file_function import print_debug
+from init_function import connect, init_verif, get_driver
+from GUI import GUI, Login
 
-try:
-    driver = webdriver.Chrome()
-except:
-    print_debug("[DRIVER] don't detect Chrome","yellow")
-    try:
-        driver = webdriver.Opera()
-    except:
-        print_debug("[DRIVER] don't detect Opera","yellow")
-        driver = webdriver.Firefox() 
-driver.implicitly_wait(1)
+open("./file/DEBUG.txt", "w", encoding="utf-8").close()
 
-if open(".\\file\\log.txt","r", encoding="utf-8").read() == "" or open(".\\file\\log.txt","r", encoding="utf-8").read() == "None":
+driver = get_driver()
+init_verif(driver)
+
+if "login" not in open(".\\file\\log.txt","r", encoding="utf-8").read():
     Login(driver).root.mainloop()
 else:
     connect(driver)
@@ -23,3 +16,8 @@ else:
 gui = GUI(driver)
 gui.Menu_1(gui.BG1)
 gui.root.mainloop()
+
+try:
+    driver.close()
+except:
+    pass

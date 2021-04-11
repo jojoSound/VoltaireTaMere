@@ -1,3 +1,1 @@
-auto_login:1
-accuracy:100
-time:10
+{"auto_login": 1, "accuracy": "100", "time": "1"}
