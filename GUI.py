@@ -309,6 +309,10 @@ class GUI:
 
     def init_module(self):
         try:
+            self.driver.find_element_by_id("activityCellDiv_"+str(self.listB_Module.curselection()[0] + 1)).click()
+        except:
+            pass
+        try:
             self.module = Module(".\\Modules\\"+ self.prgm.get() + "\\Module"+ str(self.listB_Module.curselection()[0] + 1)+ ".txt")
         except:
             self.module = Module(".\\Modules\\Custom\\Module1.txt")
@@ -475,5 +479,6 @@ class Login:
     
     def unactive(self):
         self.flog.write(json.dumps({"login":None,"mdp":None}))
+        write_data("./file/options.txt","auto_login", 0)
         self.flog.close()
         self.root.destroy()

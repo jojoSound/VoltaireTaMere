@@ -46,14 +46,16 @@ class pop_up:
             exit()
 
 def connect(driver):
-    logIn= found_data(".\\file\\log.txt", "login")
-    mdp = found_data(".\\file\\log.txt", "mdp")
     try:
         driver.find_element_by_id("btn_home_sortir").click()
     except:
         pass
     driver.get("https://www.projet-voltaire.fr/voltaire/com.woonoz.gwt.woonoz.Voltaire/Voltaire.html?returnUrl=www.projet-voltaire.fr/choix-parcours/&applicationCode=pv")
+    
     if found_data("./file/options.txt", "auto_login"):
+        logIn= found_data(".\\file\\log.txt", "login")
+        mdp = found_data(".\\file\\log.txt", "mdp")
+        
         driver.find_element_by_id("user_pseudonym").send_keys(logIn)
         driver.find_element_by_id("user_password").send_keys(mdp)
         driver.find_element_by_id("login-btn").click()
