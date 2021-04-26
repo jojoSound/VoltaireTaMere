@@ -4,8 +4,8 @@ from file_function import print_debug, found_data
 class Question:
     def __init__(self, Phrase, close_matche):
         self.phrase_No_change = Phrase
-        self.phrase = Phrase.replace("‑","-").replace("-","- ").replace(",","").replace(".","").replace("'","' ")
-        self.matche = close_matche.replace("‑","-").replace("-","- ").replace(",","").replace(".","").replace("'","' ")
+        self.phrase = Phrase.replace("‑","-").replace("-","- ").replace("'","' ").replace("(","( ").replace(")"," )").replace(".","")
+        self.matche = close_matche.replace("‑","-").replace("-","- ").replace("'","' ").replace("(","( ").replace(")"," )").replace(".","")
         self.matche_No_Change = close_matche
         self.corr_in_matche =  close_matche[close_matche.find("<") : close_matche.find(">")].replace("<","").replace(">","")
         self.err_list = []
@@ -19,16 +19,19 @@ class Question:
         Words_err = ""
         extrt = " "
         i = 0
+        print_debug("[find_err] locating error...","cyan")
         while extrt != "":
             extrt = self.matche[self.matche.find("<",i) : self.matche.find(">",i) ].replace("<","").replace(">","") 
             try:
-                if self.matche[self.matche.find(">",i)+1] == "-":
-                    extrt += "-"
+                if self.matche[self.matche.find(">",i)+1] != " " and extrt != "":
+                    if self.matche[self.matche.find(">",i)+1 : self.matche.find(" ",self.matche.find(">",i))] != "":
+                        extrt += self.matche[self.matche.find(">",i)+1 : self.matche.find(" ",self.matche.find(">",i))]
+                    else:
+                        extrt += self.matche[self.matche.find(">",i)+1 :]
             except:
-                None
+                pass
 
             i = self.matche.find(">",i)+1
-
             if extrt != "" and extrt not in Words_err:
                 Words_err += extrt+" "
 

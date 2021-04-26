@@ -53,8 +53,11 @@ def BOT(driver, module, accr):
             if question.matche != "":
                 if not(module.test_blanc):
                     driver.find_element_by_id("btn_pas_de_faute").click()
+                else:
+                    driver.find_element_by_class_name("noMistakeButton").click()
             else:
-                driver.find_elements_by_xpath("//span[@class = 'pointAndClickSpan'][.='"+ question.phrase.split()[0] +"']")[0].click()
+                print(question.phrase.split()[0].replace(",","").replace("'",""))
+                driver.find_elements_by_xpath("//span[@class = 'pointAndClickSpan'][.='"+ question.phrase.split()[0].replace(",","").replace("'","").replace("-","") +"']")[0].click()
             return ["auto_fail"]
         
         if question.matche != "":
@@ -62,11 +65,11 @@ def BOT(driver, module, accr):
                 driver.find_elements_by_xpath("//span[@class = 'pointAndClickSpan'][.='"+ question.err_in_phrase +"']")[ found_good_one(question.phrase, question.matche, question.err_in_phrase) ].click()
                 print_debug("[BOT] EXECUTION CLICK DONE","green")
             except:
-                if "…" in question.err_in_phrase:
-                        driver.find_elements_by_xpath("//span[@class = 'pointAndClickSpan'][.='"+ question.err_in_phrase.replace("…","") +"']")[ found_good_one(question.phrase, question.matche, question.err_in_phrase.replace("…","")) ].click()
-                else:
+                try:
+                    driver.find_elements_by_xpath("//span[@class = 'pointAndClickSpan'][.='"+ question.err_in_phrase.replace("…","").replace(",","").replace(".","").replace(";","") +"']")[ found_good_one(question.phrase, question.matche, question.err_in_phrase.replace("…","")) ].click()
+                except:
                     print_debug("[BOT] FAILED TO EXECUTE CAN'T TOUCH: "+str(question.err_in_phrase),"red")
-                    return "can't_touche "+str(question.err_in_phrase)
+                    return "can't_touche &"+str(question.err_in_phrase)
         else:
             try:
                 driver.find_element_by_class_name("noMistakeButton").click()

@@ -294,6 +294,7 @@ class GUI:
         self.btn_manual.place_forget()
         self.btn_auto.place_forget()
         self.btn_back.place_forget()
+        self.listB_Module.selection_clear(0,99)
         self.listB_Module.place_forget()
         self.log.place_forget()
         self.btn_pont_sup.place_forget()
@@ -349,7 +350,13 @@ class GUI:
 
         while self.bot_on:
             self.log.delete(1.0,"end")
-            return_tag = BOT(self.driver, self.module, self.accuracy.get())
+            try:
+                return_tag = BOT(self.driver, self.module, self.accuracy.get())
+            except:
+                return_tag = ["stop"]
+                print("[ROUTINE_BOT] crash happend or working terminated")
+                self.bot_on = False
+
             print_debug("return_tag: "+str(return_tag)+"\n","yellow")
             if type(return_tag) != list:
                 if return_tag == "feature_in":
