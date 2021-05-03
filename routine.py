@@ -57,16 +57,16 @@ def BOT(driver, module, accr):
                     driver.find_element_by_class_name("noMistakeButton").click()
             else:
                 print(question.phrase.split()[0].replace(",","").replace("'",""))
-                driver.find_elements_by_xpath("//span[@class = 'pointAndClickSpan'][.='"+ question.phrase.split()[0].replace(",","").replace("'","").replace("-","") +"']")[0].click()
+                driver.find_elements_by_xpath("//span[.='"+ question.phrase.split()[0].replace(",","").replace("'","").replace("-","") +"']")[0].click()
             return ["auto_fail"]
         
         if question.matche != "":
             try:
-                driver.find_elements_by_xpath("//span[@class = 'pointAndClickSpan'][.='"+ question.err_in_phrase +"']")[ found_good_one(question.phrase, question.matche, question.err_in_phrase) ].click()
+                driver.find_elements_by_xpath("//span[.='"+ question.err_in_phrase +"']")[ found_good_one(question.phrase, question.matche, question.err_in_phrase) ].click()
                 print_debug("[BOT] EXECUTION CLICK DONE","green")
             except:
                 try:
-                    driver.find_elements_by_xpath("//span[@class = 'pointAndClickSpan'][.='"+ question.err_in_phrase.replace("…","").replace(",","").replace(".","").replace(";","") +"']")[ found_good_one(question.phrase, question.matche, question.err_in_phrase.replace("…","")) ].click()
+                    driver.find_elements_by_xpath("//span[.='"+ question.err_in_phrase.replace("…","").replace(",","").replace(".","").replace(";","") +"']")[ found_good_one(question.phrase, question.matche, question.err_in_phrase.replace("…","")) ].click()
                 except:
                     print_debug("[BOT] FAILED TO EXECUTE CAN'T TOUCH: "+str(question.err_in_phrase),"red")
                     return "can't_touche &"+str(question.err_in_phrase)
@@ -102,7 +102,7 @@ def BOT(driver, module, accr):
 
         if verbe != None and verbe != "":
             if "réfléchi" in consigne and "accidentellement" not in consigne:
-                driver.find_elements_by_xpath("//span[@class = 'pointAndClickSpan'][.='"+ verbe.replace("-","").replace("'","") +"']")[found_good_one(question.phrase, question.matche, question.err_in_phrase)].click()
+                driver.find_elements_by_xpath("//span[.='"+ verbe.replace("-","").replace("'","") +"']")[found_good_one(question.phrase, question.matche, question.err_in_phrase)].click()
                 print_debug("CLICK DONE", "green")
 
                 if driver.find_elements_by_xpath("//span[@title='Mauvaise réponse']") != []:
@@ -114,13 +114,13 @@ def BOT(driver, module, accr):
                     match2 = match2[ :match2.index("<") ] + add_data + match2[ match2.index(">")+1:]
                     module.match[module.match.index(match1)] = match2
             else:
-                driver.find_elements_by_xpath("//span[@class = 'pointAndClickSpan'][.='"+ verbe +"']")[0].click()
+                driver.find_elements_by_xpath("//span[.='"+ verbe +"']")[0].click()
                 print_debug("CLICK DONE", "green")
 
         else:
             print_debug("FAILED, learning...", "magenta")
             print(phrase)
-            driver.find_elements_by_xpath("//span[@class = 'pointAndClickSpan'][.='"+ phrase[0].replace("-","").replace("'","") +"']")[0].click()
+            driver.find_elements_by_xpath("//span[.='"+ phrase[0].replace("-","").replace("'","") +"']")[0].click()
             add_data = driver.find_element_by_class_name("answerWord").text.replace("‑","-").replace("-","- ").replace(",","").replace(".","").replace("'","' ").split()
             add_data = add_data[len(add_data)-1].replace(" ","")
             if "essentiellement" in consigne:
